@@ -21,12 +21,12 @@ def run_multitime_qemuriscv64(run_id, num_runs, bios_path, output_csv="multitime
 
     process = subprocess.run(cmd, capture_output=True, text=True)
 
-    if proc.returncode != 0:
+    if process.returncode != 0:
         print("Error running Cmd")
-        print(proc.stderr)
+        print(process.stderr)
         return
 
-    output= proc.stdout
+    output= process.stdout
     print("Command Finished")
 
     pattern = re.compile(
