@@ -29,7 +29,7 @@ def run_multitime_qemuriscv64(run_id, num_runs, bios_path, output_csv="multitime
     output= proc.stdout
     print("Command Finished")
 
-      pattern = re.compile(
+    pattern = re.compile(
         r"^(real|user|sys)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)",
         re.MULTILINE
     )
