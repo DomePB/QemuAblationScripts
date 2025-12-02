@@ -1,0 +1,40 @@
+import os
+import subprocess
+from pathlib import Path
+
+#Builds that the script builds with configure flags
+BUILDS = {
+    "build-default": [],
+    "build-noOptimization": ["--disable-optimization"]
+}
+
+
+BASE_DIR = Path("/home/dome/qemu/QemuOptimizaerAblationStudy")
+
+
+def run_cmd(cmd, cwd=None):
+    print(f"\n Running: {' '.join(cmd)}")
+    result = subprocess.run(cmd, cwd=cwd)
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Command failed with return code {result.returncode}")
+    
+
+def build_all():
+    for build, config_flags in BUILDS.items():
+        print("\n Starting build: {build}")
+
+        build_path = BASE_DIR / build
+
+        build_path.mkdir(parents=True, exist_ok=True)
+
+        configure_cmd = ["../configure"] + config_flags
+
+        run_cmd(configure_cmd, cwd= build_path)
+
+        run_cmd("make", cwd= build_path)
+
+        print(f"\n build completed: {build}")
+
+
+build_all()
