@@ -4,8 +4,8 @@ from pathlib import Path
 
 #Builds that the script builds with configure flags
 BUILDS = {
-    "build-default": [],
-    "build-noOptimization": ["--disable-optimization"]
+    "build-default": ["--extra-cflags=-DTC_OPTIMIZATION"],
+    "build-noOptimization": []
 }
 
 
@@ -22,7 +22,7 @@ def run_cmd(cmd, cwd=None):
 
 def build_all():
     for build, config_flags in BUILDS.items():
-        print("\n Starting build: {build}")
+        print(f"\n Starting build: {build}")
 
         build_path = BASE_DIR / build
 
