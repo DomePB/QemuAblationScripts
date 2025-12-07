@@ -6,7 +6,9 @@ import uuid
 from pathlib import Path
 
 QEMU_BUILDS = [
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build/qemu-system-riscv64"
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-default/qemu-system-riscv64",
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-noOptimization/qemu-system-riscv64",
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-defaultSMask/qemu-system-riscv64"
 ]
 
 QEMU_ARGS = [

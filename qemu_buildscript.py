@@ -5,7 +5,8 @@ from pathlib import Path
 #Builds that the script builds with configure flags
 BUILDS = {
     "build-default": ["--extra-cflags=-DTC_OPTIMIZATION"],
-    "build-noOptimization": []
+    "build-noOptimization": [],
+    "build-defaultSMask": ["--extra-cflags=-DSET_SMASK_DEFAULT"]
 }
 
 
