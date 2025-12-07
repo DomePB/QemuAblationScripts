@@ -4,13 +4,13 @@ from pathlib import Path
 
 #Builds that the script builds with configure flags
 BUILDS = {
-    "build-default": ["--extra-cflags=-DTC_OPTIMIZATION"],
+    "build-default": ["--extra-cflags=-DTCG_OPTIMIZATION"],
     "build-noOptimization": [],
-    "build-defaultSMask": ["--extra-cflags=-DSET_SMASK_DEFAULT"]
+    "build-defaultSMask": ["--extra-cflags=-DSET_SMASK_DEFAULT -DTCG_OPTIMIZATION"]
 }
 
 
-BASE_DIR = Path("/home/dome/qemu/QemuOptimizaerAblationStudy")
+BASE_DIR = Path("/home/dome/qemu/QemuOptimizerAblationStudy")
 
 
 def run_cmd(cmd, cwd=None):
