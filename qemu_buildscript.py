@@ -6,7 +6,8 @@ from pathlib import Path
 BUILDS = {
     "build-default": ["--extra-cflags=-DTCG_OPTIMIZATION"],
     "build-noOptimization": [],
-    "build-defaultSMask": ["--extra-cflags=-DSET_SMASK_DEFAULT -DTCG_OPTIMIZATION"]
+    "build-defaultSMask": ["--extra-cflags=-DSET_SMASK_DEFAULT -DTCG_OPTIMIZATION"],
+    "build-informationStudy": ["--extra-cflags=-DPRINT_MASKS"]
 }
 
 
