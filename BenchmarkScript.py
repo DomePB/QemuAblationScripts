@@ -6,9 +6,9 @@ import uuid
 from pathlib import Path
 
 QEMU_BUILDS = [
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build-default/qemu-system-riscv64",
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build-noOptimization/qemu-system-riscv64",
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build-defaultSMask/qemu-system-riscv64"
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-default/",
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-noOptimization/",
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-defaultSMask/"
 ]
 
 QEMU_ARGS = [
@@ -19,22 +19,33 @@ QEMU_ARGS = [
     "-serial", "stdio"
 ]
 
-BINARIES = [
-    "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf"
+BENCHMARKS = [
+    {
+        "name" : "opensbi_linux_payload.elf",
+        "command": "qemu-system-riscv64",
+        "path": "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf",
+        "flags": QEMU_ARGS + ["-bios"],
+    }
 ]
 
-def run_benchmark(build, binary):
+def build_cmd(build_path, benchmark):
+    build_path = Path(build_path)
+    qemu_bin = build_path / benchmark["command"]
+
+    return ([str(qemu_bin)] + benchmark["flags"] + [benchmark["path"]])
+
+def run_benchmark(build, benchmark):
     run_id = str(uuid.uuid4())
     start = time.perf_counter()
 
-    result = subprocess.run([build] + QEMU_ARGS + ["-bios", str(binary)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(build_cmd(build, benchmark), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     end = time.perf_counter()
     execution_time = end - start
 
     return {"run_id": run_id,
             "build": build,
-            "binary": binary,
+            "binary": benchmark["name"],
             "execution_time": execution_time,
             "return_code": result.returncode,
             "stdout": result.stdout,
@@ -58,9 +69,9 @@ def save_cvs(results, path):
 def main():
     results = []
     for build in QEMU_BUILDS:
-        for binary in BINARIES:
-            print(f"Running benchmark: {build} with Binary: {binary}")
-            results.append(run_benchmark(os.path.abspath(build), os.path.abspath(binary)))
+        for benchmark in BENCHMARKS:
+            print(f"Running benchmark: {build} with Binary: {benchmark}")
+            results.append(run_benchmark(build, benchmark))
 
     save_cvs(results, "benchmark_results.csv")
     print(f"CSV saved to: benchmark_results.csv")
