@@ -22,9 +22,15 @@ QEMU_ARGS = [
 BENCHMARKS = [
     {
         "name" : "opensbi_linux_payload.elf",
-        "command": "qemu-system-riscv64",
-        "path": "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf",
-        "flags": QEMU_ARGS + ["-bios"],
+        "command" : "qemu-system-riscv64",
+        "path" : "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf",
+        "flags" : QEMU_ARGS + ["-bios"],
+    },
+    {
+        "name" : "dos-benchmark",
+        "command" : "qemu-system-i386",
+        "path" : "/home/dome/qemu/Qemu-Images/freedos.img",
+        "flags" : ["-m", "16", "-enable-kvm", "-hda"],
     }
 ]
 
@@ -67,9 +73,9 @@ def save_cvs(results, path):
 
 
 def main():
-    results = []
-    for build in QEMU_BUILDS:
-        for benchmark in BENCHMARKS:
+    results = []  
+    for benchmark in BENCHMARKS:
+        for build in QEMU_BUILDS:
             print(f"Running benchmark: {build} with Binary: {benchmark}")
             results.append(run_benchmark(build, benchmark))
 
