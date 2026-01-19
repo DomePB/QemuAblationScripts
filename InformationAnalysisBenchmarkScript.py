@@ -2,10 +2,12 @@ import os
 import subprocess
 import re
 from collections import Counter
+from pathlib import Path
+import matplotlib.pyplot as plt
 
 
 QEMU_BUILDS = [
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build-informationStudy/qemu-system-riscv64"
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-informationStudy/"
 ]
 
 QEMU_ARGS = [
@@ -16,8 +18,13 @@ QEMU_ARGS = [
     "-serial", "stdio"
 ]
 
-BINARIES = [
-    "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf"
+BENCHMARKS = [
+    {
+        "name" : "opensbi_linux_payload.elf",
+        "command" : "qemu-system-riscv64",
+        "path" : "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf",
+        "flags" : QEMU_ARGS + ["-bios"],
+    }
 ]
 
 MASK_RE = re.compile(
@@ -31,7 +38,29 @@ S_DEFAULT = 0x0000000000000000
 A_DEFAULT = 0xffffffffffffffff
 
 
+def plot_histogram(hist):
+    x = list(range(65))
+    y = [hist.get(i, 0) for i in x]
 
+    plt.figure()
+    plt.bar(x, y)
+    plt.xlabel("Number of Default Bits")
+    plt.ylabel("Amount")
+    plt.title("Default Bits")
+    plt.xticks(range(0, 65, max(1, 64 // 8)))
+    plt.tight_layout()
+    plt.yscale("log")
+    plt.show()
+
+#Analyzing Bitwise
+
+MASK_64 = (1 << 64)-1
+
+def count_default_bits(z, o):
+    default_mask = z & ~o & MASK_64
+    return default_mask.bit_count()
+
+#Analyzing any non Default Variable
 def analyze_masks(z, o, s, a):
 
     info_z = z != Z_DEFAULT
@@ -41,12 +70,17 @@ def analyze_masks(z, o, s, a):
        
     return info_z, info_o, info_s, info_a
 
+def build_cmd(build_path, benchmark):
+    build_path = Path(build_path)
+    qemu_bin = build_path / benchmark["command"]
 
-def run_benchmark(build, binary):
-    print(f"\n--- Running {build} with binary {binary} ---")
+    return ([str(qemu_bin)] + benchmark["flags"] + [benchmark["path"]])
+
+def run_benchmark(build, benchmark):
+    print(f"\n--- Running {build} with binary {benchmark} ---")
 
     proc = subprocess.Popen(
-        [build] + QEMU_ARGS + ["-bios", binary],
+       build_cmd(build,benchmark),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -55,6 +89,7 @@ def run_benchmark(build, binary):
     )
 
     stats = Counter()
+    default_hist = Counter()
     lines = 0
 
     for line in proc.stdout:
@@ -68,6 +103,8 @@ def run_benchmark(build, binary):
             a = int(match.group(4), 16)
 
             info_z, info_o, info_s, info_a = analyze_masks(z, o, s, a)
+            default_bits = count_default_bits(z, o)
+            default_hist[default_bits] += 1
 
             stats["z"] += info_z
             stats["o"] += info_o
@@ -85,16 +122,24 @@ def run_benchmark(build, binary):
         print(f"Non Default O bits: {stats['o']}. Percentage of O we have Information about: {stats['o'] / lines:.2f}")
         print(f"Non Default S bits: {stats['s']}. Percentage of S we have Information about: {stats['s'] / lines:.2f}")
         print(f"Non Default A bits: {stats['a']}. Percentage of A we have Information about: {stats['a'] / lines:.2f}")
+        plot_histogram(default_hist)
+        save_histogram_csv(default_hist)
     else:
         print("No fold_masks_zosa_int lines found!")
 
     print("--------------------------------\n")
 
+def save_histogram_csv(hist, filename="default_bits_hist.csv"):
+    with open(filename, "w") as f:
+        f.write("default_bits,count\n")
+        for bits in sorted(hist):
+            f.write(f"{bits},{hist[bits]}\n")
+
 
 def main():
     for build in QEMU_BUILDS:
-        for binary in BINARIES:
-            run_benchmark(os.path.abspath(build), os.path.abspath(binary))
+        for benchmark in BENCHMARKS:
+            run_benchmark(build, benchmark)
 
 
 main()
