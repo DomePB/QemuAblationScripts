@@ -31,6 +31,12 @@ BENCHMARKS = [
         "command" : "qemu-system-i386",
         "path" : "/home/dome/qemu/Qemu-Images/freedos.img",
         "flags" : ["-m", "16", "-enable-kvm", "-hda"],
+    },
+    {
+        "name" : "target-631",
+        "command" : "qemu-system-risvc64",
+        "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
+        "flags" : QEMU_ARGS + ["-bios"],
     }
 ]
 

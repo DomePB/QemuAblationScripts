@@ -24,6 +24,12 @@ BENCHMARKS = [
         "command" : "qemu-system-riscv64",
         "path" : "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf",
         "flags" : QEMU_ARGS + ["-bios"],
+    },
+    {
+        "name" : "target-631.deepsjeng",
+        "command" : "qemu-system-riscv64",
+        "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
+        "flags" : QEMU_ARGS + ["-bios"],
     }
 ]
 
