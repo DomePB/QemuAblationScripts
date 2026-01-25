@@ -129,13 +129,13 @@ def run_benchmark(build, benchmark):
         print(f"Non Default S bits: {stats['s']}. Percentage of S we have Information about: {stats['s'] / lines:.2f}")
         print(f"Non Default A bits: {stats['a']}. Percentage of A we have Information about: {stats['a'] / lines:.2f}")
         plot_histogram(default_hist)
-        save_histogram_csv(default_hist)
+        save_histogram_csv(default_hist, benchmark["name"]+" default_bits.csv")
     else:
         print("No fold_masks_zosa_int lines found!")
 
     print("--------------------------------\n")
 
-def save_histogram_csv(hist, filename="default_bits_hist.csv"):
+def save_histogram_csv(hist, filename):
     with open(filename, "w") as f:
         f.write("default_bits,count\n")
         for bits in sorted(hist):
