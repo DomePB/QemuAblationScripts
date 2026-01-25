@@ -82,8 +82,9 @@ def main():
     results = []  
     for benchmark in BENCHMARKS:
         for build in QEMU_BUILDS:
-            print(f"Running benchmark: {build} with Binary: {benchmark}")
-            results.append(run_benchmark(build, benchmark))
+            for i in range(0,3):
+                print(f"Running benchmark: {build} with Binary: {benchmark}")
+                results.append(run_benchmark(build, benchmark))
 
     save_cvs(results, "benchmark_results.csv")
     print(f"CSV saved to: benchmark_results.csv")
