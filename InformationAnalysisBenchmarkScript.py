@@ -30,13 +30,26 @@ BENCHMARKS = [
         "command" : "qemu-system-riscv64",
         "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
         "flags" : QEMU_ARGS + ["-bios"],
+    },
+    {
+        "name" : "dos-benchmark",
+        "command" : "qemu-system-i386",
+        "path" : "/home/dome/qemu/Qemu-Images/freedos.img",
+        "flags" : [],
     }
 ]
 
 MASK_RE = re.compile(
-    r"fold_masks_zosa_int:\s*z:\s*([0-9a-fA-F]+)\s*"
+    r"fold_masks_zosa_int:\s*"
+    r"op:\s*(\S+)\s*"
+    r"z:\s*([0-9a-fA-F]+)\s*"
     r"o:\s*([0-9a-fA-F]+)\s*s:\s*([0-9a-fA-F]+)\s*a:\s*([0-9a-fA-F]+)"
 )
+
+FINISH_RE = re.compile(
+    r"finish_folding:\s*op\s*(\S+)"
+)
+
 
 Z_DEFAULT = 0xffffffffffffffff
 O_DEFAULT = 0x0000000000000000
@@ -100,13 +113,15 @@ def run_benchmark(build, benchmark):
 
     for line in proc.stdout:
         match = MASK_RE.search(line)
+        match_finishfolding = FINISH_RE.search(line)
         if match:
             lines += 1
 
-            z = int(match.group(1), 16)
-            o = int(match.group(2), 16)
-            s = int(match.group(3), 16)
-            a = int(match.group(4), 16)
+            op = match.group(1)
+            z = int(match.group(2), 16)
+            o = int(match.group(3), 16)
+            s = int(match.group(4), 16)
+            a = int(match.group(5), 16)
 
             info_z, info_o, info_s, info_a = analyze_masks(z, o, s, a)
             default_bits = count_default_bits(z, o)
@@ -116,6 +131,12 @@ def run_benchmark(build, benchmark):
             stats["o"] += info_o
             stats["s"] += info_s
             stats["a"] += info_a
+            stats[op] += 1
+
+        if match_finishfolding:
+            lines +=1
+            op = match_finishfolding.group(1)
+            stats[op] += 1
 
     proc.wait()
 
