@@ -47,7 +47,7 @@ MASK_RE = re.compile(
 )
 
 FINISH_RE = re.compile(
-    r"finish_folding:\s*op\s*(\S+)"
+    r"finish_folding:\s*op:\s*(\S+)"
 )
 
 
@@ -109,6 +109,7 @@ def run_benchmark(build, benchmark):
 
     stats = Counter()
     default_hist = Counter()
+    op_hist = Counter()
     lines = 0
 
     for line in proc.stdout:
@@ -131,12 +132,12 @@ def run_benchmark(build, benchmark):
             stats["o"] += info_o
             stats["s"] += info_s
             stats["a"] += info_a
-            stats[op] += 1
+            op_hist[op] += 1
 
         if match_finishfolding:
             lines +=1
             op = match_finishfolding.group(1)
-            stats[op] += 1
+            op_hist[op] += 1
 
     proc.wait()
 
@@ -150,7 +151,9 @@ def run_benchmark(build, benchmark):
         print(f"Non Default S bits: {stats['s']}. Percentage of S we have Information about: {stats['s'] / lines:.2f}")
         print(f"Non Default A bits: {stats['a']}. Percentage of A we have Information about: {stats['a'] / lines:.2f}")
         plot_histogram(default_hist)
-        save_histogram_csv(default_hist, benchmark["name"]+" default_bits.csv")
+        save_histogram_csv(default_hist, benchmark["name"]+"_default_bits.csv")
+        plot_operation_histogram(op_hist)
+        save_operation_histogram_csv(op_hist, benchmark["name"]+"_operation_hist.csv")
     else:
         print("No fold_masks_zosa_int lines found!")
 
@@ -161,6 +164,27 @@ def save_histogram_csv(hist, filename):
         f.write("default_bits,count\n")
         for bits in sorted(hist):
             f.write(f"{bits},{hist[bits]}\n")
+
+def plot_operation_histogram(op_hist):
+    ops = list(op_hist.keys())
+    counts = [op_hist[op] for op in ops]
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(ops, counts)
+    plt.xlabel("Operation")
+    plt.ylabel("Count")
+    plt.title("Operation Frequency")
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.yscale("log")
+    plt.show()
+
+
+def save_operation_histogram_csv(op_hist, filename):
+    with open(filename, "w") as f:
+        f.write("operation,count\n")
+        for op, count in op_hist.items():
+            f.write(f"{op},{count}\n")
 
 
 def main():
