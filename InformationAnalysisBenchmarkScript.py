@@ -110,6 +110,9 @@ def run_benchmark(build, benchmark):
     stats = Counter()
     default_hist = Counter()
     op_hist = Counter()
+    op_mask_stats = Counter()
+    op_mask_count = Counter()
+    
     lines = 0
 
     for line in proc.stdout:
@@ -133,6 +136,16 @@ def run_benchmark(build, benchmark):
             stats["s"] += info_s
             stats["a"] += info_a
             op_hist[op] += 1
+            op_mask_count[op] += 1
+
+            if info_z:
+                op_mask_stats[(op, "z")] += 1
+            if info_o:
+                op_mask_stats[(op, "o")] += 1
+            if info_s:
+                op_mask_stats[(op, "s")] += 1
+            if info_a:
+                op_mask_stats[(op, "a")] += 1
 
         if match_finishfolding:
             lines +=1
@@ -154,6 +167,8 @@ def run_benchmark(build, benchmark):
         save_histogram_csv(default_hist, benchmark["name"]+"_default_bits.csv")
         plot_operation_histogram(op_hist)
         save_operation_histogram_csv(op_hist, benchmark["name"]+"_operation_hist.csv")
+        plot_operation_mask_histogram(op_mask_stats,  op_mask_count)
+        save_operation_mask_exec_csv(op_mask_stats, op_mask_count, benchmark["name"]+"_operationMaskCount_hist.csv")
     else:
         print("No fold_masks_zosa_int lines found!")
 
@@ -185,6 +200,52 @@ def save_operation_histogram_csv(op_hist, filename):
         f.write("operation,count\n")
         for op, count in op_hist.items():
             f.write(f"{op},{count}\n")
+
+def plot_operation_mask_histogram(op_mask_stats,  op_mask_count):
+    ops = sorted(
+        set(op for (op, _) in op_mask_stats) |
+        set(op_mask_count.keys())
+    )
+
+    z_counts = [op_mask_stats.get((op, "z"), 0) for op in ops]
+    o_counts = [op_mask_stats.get((op, "o"), 0) for op in ops]
+    s_counts = [op_mask_stats.get((op, "s"), 0) for op in ops]
+    a_counts = [op_mask_stats.get((op, "a"), 0) for op in ops]
+    op_counts = [op_mask_count.get(op, 0) for op in ops]
+
+    x = range(len(ops))
+    width = 0.15
+
+    plt.figure(figsize=(16, 6))
+    plt.bar([i - 2*width for i in x], op_counts, width, label="Op Count")
+    plt.bar([i - 1*width for i in x], z_counts, width, label="Z")
+    plt.bar([i for i in x], o_counts, width, label="O")
+    plt.bar([i + 1*width for i in x], s_counts, width, label="S")
+    plt.bar([i + 2*width for i in x], a_counts, width, label="A")
+
+    plt.xlabel("Operation")
+    plt.ylabel("Non-default count")
+    plt.title("Non-default Mask Count per Operation")
+    plt.xticks(x, ops, rotation=90)
+    plt.yscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+def save_operation_mask_exec_csv(op_mask_stats, op_mask_count, filename):
+    ops = sorted(set(op_mask_count) | {op for op, _ in op_mask_stats})
+
+    with open(filename, "w") as f:
+        f.write("operation,z,o,s,a,exec\n")
+        for op in ops:
+            f.write(
+                f"{op},"
+                f"{op_mask_stats.get((op,'z'),0)},"
+                f"{op_mask_stats.get((op,'o'),0)},"
+                f"{op_mask_stats.get((op,'s'),0)},"
+                f"{op_mask_stats.get((op,'a'),0)},"
+                f"{op_mask_count.get(op,0)}\n"
+            )
 
 
 def main():
