@@ -7,7 +7,8 @@ BUILDS = {
     "build-default": ["--extra-cflags=-DTCG_OPTIMIZATION"],
     "build-noOptimization": [],
     "build-defaultSMask": ["--extra-cflags=-DSET_SMASK_DEFAULT -DTCG_OPTIMIZATION"],
-    "build-informationStudy": ["--extra-cflags=-DTCG_OPTIMIZATION -DPRINT_MASKS"]
+    "build-informationStudy": ["--extra-cflags=-DTCG_OPTIMIZATION -DPRINT_MASKS"],
+    "build-OMaskFix": ["--extra-cflags=-DTCG_OPTIMIZATION -DO_MASK_FIX"]
 }
 
 

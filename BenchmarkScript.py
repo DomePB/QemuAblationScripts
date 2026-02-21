@@ -8,7 +8,8 @@ from pathlib import Path
 QEMU_BUILDS = [
     "/home/dome/qemu/QemuOptimizerAblationStudy/build-default/",
     "/home/dome/qemu/QemuOptimizerAblationStudy/build-noOptimization/",
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build-defaultSMask/"
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-defaultSMask/",
+    "/home/dome/qemu/QemuOptimizerAblationStudy/build-OMaskFix/"
 ]
 
 QEMU_ARGS = [
@@ -34,7 +35,7 @@ BENCHMARKS = [
     },
     {
         "name" : "target-631",
-        "command" : "qemu-system-risvc64",
+        "command" : "qemu-system-riscv64",
         "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
         "flags" : QEMU_ARGS + ["-bios"],
     }
