@@ -57,7 +57,7 @@ S_DEFAULT = 0x0000000000000000
 A_DEFAULT = 0xffffffffffffffff
 
 
-def plot_histogram(hist):
+def plot_histogram(hist, output_path):
     x = list(range(65))
     y = [hist.get(i, 0) for i in x]
 
@@ -69,7 +69,8 @@ def plot_histogram(hist):
     plt.xticks(range(0, 65, max(1, 64 // 8)))
     plt.tight_layout()
     plt.yscale("log")
-    plt.show()
+    plt.savefig(output_path)
+    plt.close()
 
 #Analyzing Bitwise
 
@@ -98,6 +99,9 @@ def build_cmd(build_path, benchmark):
 def run_benchmark(build, benchmark):
     print(f"\n--- Running {build} with binary {benchmark} ---")
 
+    output_dir = Path("results") / Path(build).name / benchmark["name"]
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     proc = subprocess.Popen(
        build_cmd(build,benchmark),
         stdout=subprocess.PIPE,
@@ -112,6 +116,9 @@ def run_benchmark(build, benchmark):
     op_hist = Counter()
     op_mask_stats = Counter()
     op_mask_count = Counter()
+    default_hist_z = Counter()
+    default_hist_o = Counter()
+    default_hist_s = Counter()
     
     lines = 0
 
@@ -130,6 +137,14 @@ def run_benchmark(build, benchmark):
             info_z, info_o, info_s, info_a = analyze_masks(z, o, s, a)
             default_bits = count_default_bits(z, o)
             default_hist[default_bits] += 1
+
+            default_bits_z = z.bit_count()
+            default_bits_o = (~o & MASK_64).bit_count()
+            default_bits_s = (~s & MASK_64).bit_count()
+
+            default_hist_z[default_bits_z] += 1
+            default_hist_o[default_bits_o] += 1
+            default_hist_s[default_bits_s] += 1
 
             stats["z"] += info_z
             stats["o"] += info_o
@@ -163,24 +178,27 @@ def run_benchmark(build, benchmark):
         print(f"Non Default O bits: {stats['o']}. Percentage of O we have Information about: {stats['o'] / lines:.2f}")
         print(f"Non Default S bits: {stats['s']}. Percentage of S we have Information about: {stats['s'] / lines:.2f}")
         print(f"Non Default A bits: {stats['a']}. Percentage of A we have Information about: {stats['a'] / lines:.2f}")
-        plot_histogram(default_hist)
-        save_histogram_csv(default_hist, benchmark["name"]+"_default_bits.csv")
-        plot_operation_histogram(op_hist)
-        save_operation_histogram_csv(op_hist, benchmark["name"]+"_operation_hist.csv")
-        plot_operation_mask_histogram(op_mask_stats,  op_mask_count)
-        save_operation_mask_exec_csv(op_mask_stats, op_mask_count, benchmark["name"]+"_operationMaskCount_hist.csv")
+        plot_histogram(default_hist, output_dir / "default_bits.png")
+        save_histogram_csv(default_hist, output_dir / "default_bits.csv")
+        plot_histogram_defaultbits_mask(default_hist, default_hist_z, default_hist_o, default_hist_s, output_dir / "default_bits_multi.png")
+        save_default_bits_multi_csv(default_hist, default_hist_z, default_hist_o, default_hist_s, output_dir / "default_bits_multi.csv")
+        plot_operation_histogram(op_hist, output_dir / "operation_hist.png")
+        save_operation_histogram_csv(op_hist, output_dir / "operation_hist.csv")
+        plot_operation_mask_histogram(op_mask_stats,  op_mask_count, output_dir / "operationMaskCount_hist.png")
+        save_operation_mask_exec_csv(op_mask_stats, op_mask_count, output_dir / "operationMaskCount_hist.csv")
     else:
         print("No fold_masks_zosa_int lines found!")
 
     print("--------------------------------\n")
 
-def save_histogram_csv(hist, filename):
-    with open(filename, "w") as f:
+def save_histogram_csv(hist, filepath):
+    filepath = Path(filepath)
+    with filepath.open("w") as f:
         f.write("default_bits,count\n")
         for bits in sorted(hist):
             f.write(f"{bits},{hist[bits]}\n")
 
-def plot_operation_histogram(op_hist):
+def plot_operation_histogram(op_hist, output_path):
     ops = list(op_hist.keys())
     counts = [op_hist[op] for op in ops]
 
@@ -192,16 +210,18 @@ def plot_operation_histogram(op_hist):
     plt.xticks(rotation=90)
     plt.tight_layout()
     plt.yscale("log")
-    plt.show()
+    plt.savefig(output_path)
+    plt.close()
 
 
-def save_operation_histogram_csv(op_hist, filename):
-    with open(filename, "w") as f:
+def save_operation_histogram_csv(op_hist, filepath):
+    filepath = Path(filepath)
+    with filepath.open("w") as f:
         f.write("operation,count\n")
         for op, count in op_hist.items():
             f.write(f"{op},{count}\n")
 
-def plot_operation_mask_histogram(op_mask_stats,  op_mask_count):
+def plot_operation_mask_histogram(op_mask_stats,  op_mask_count, output_path):
     ops = sorted(
         set(op for (op, _) in op_mask_stats) |
         set(op_mask_count.keys())
@@ -230,12 +250,14 @@ def plot_operation_mask_histogram(op_mask_stats,  op_mask_count):
     plt.yscale("log")
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig(output_path)
+    plt.close()
 
-def save_operation_mask_exec_csv(op_mask_stats, op_mask_count, filename):
+def save_operation_mask_exec_csv(op_mask_stats, op_mask_count, filepath):
     ops = sorted(set(op_mask_count) | {op for op, _ in op_mask_stats})
 
-    with open(filename, "w") as f:
+    filepath = Path(filepath)
+    with filepath.open("w") as f:
         f.write("operation,z,o,s,a,exec\n")
         for op in ops:
             f.write(
@@ -247,6 +269,47 @@ def save_operation_mask_exec_csv(op_mask_stats, op_mask_count, filename):
                 f"{op_mask_count.get(op,0)}\n"
             )
 
+
+def plot_histogram_defaultbits_mask(hist_all, hist_z, hist_o, hist_s, output_path):
+    x_vals = list(range(65))
+
+    y_all = [hist_all.get(i, 0) for i in x_vals]
+    y_z   = [hist_z.get(i, 0) for i in x_vals]
+    y_o   = [hist_o.get(i, 0) for i in x_vals]
+    y_s   = [hist_s.get(i, 0) for i in x_vals]
+
+    width = 0.2
+    x = range(len(x_vals))
+
+    plt.figure(figsize=(14, 6))
+
+    plt.bar([i - 1.5*width for i in x], y_all, width, label="Combined (Z & ~O)")
+    plt.bar([i - 0.5*width for i in x], y_z,   width, label="Z")
+    plt.bar([i + 0.5*width for i in x], y_o,   width, label="O")
+    plt.bar([i + 1.5*width for i in x], y_s,   width, label="S")
+
+    plt.xlabel("Number of Default Bits")
+    plt.ylabel("Count")
+    plt.title("Default Bits Histogram (Combined vs Z vs O vs S)")
+    plt.xticks(range(0, 65, 8))
+    plt.yscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+def save_default_bits_multi_csv(hist_all, hist_z, hist_o, hist_s, filepath):
+    filepath = Path(filepath)
+    with filepath.open("w") as f:
+        f.write("default_bits,combined,z,o,s\n")
+        for bits in range(65):
+            f.write(
+                f"{bits},"
+                f"{hist_all.get(bits, 0)},"
+                f"{hist_z.get(bits, 0)},"
+                f"{hist_o.get(bits, 0)},"
+                f"{hist_s.get(bits, 0)}\n"
+            )
 
 def main():
     for build in QEMU_BUILDS:
