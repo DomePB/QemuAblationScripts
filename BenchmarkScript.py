@@ -8,7 +8,6 @@ from pathlib import Path
 QEMU_BUILDS = [
     "/home/dome/qemu/QemuOptimizerAblationStudy/build-default/",
     "/home/dome/qemu/QemuOptimizerAblationStudy/build-noOptimization/",
-    "/home/dome/qemu/QemuOptimizerAblationStudy/build-defaultSMask/",
     "/home/dome/qemu/QemuOptimizerAblationStudy/build-OMaskFix/"
 ]
 
@@ -83,7 +82,7 @@ def main():
     results = []  
     for benchmark in BENCHMARKS:
         for build in QEMU_BUILDS:
-            for i in range(0,3):
+            for i in range(0,1):
                 print(f"Running benchmark: {build} with Binary: {benchmark}")
                 results.append(run_benchmark(build, benchmark))
 
