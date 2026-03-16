@@ -30,7 +30,7 @@ BENCHMARKS = [
         "name" : "dos-benchmark",
         "command" : "qemu-system-i386",
         "path" : "/home/dome/qemu/Qemu-Images/freedos.img",
-        "flags" : ["-m", "16", "-enable-kvm", "-hda"],
+        "flags" : ["-m", "16", "-hda"],
     },
     {
         "name" : "target-631",

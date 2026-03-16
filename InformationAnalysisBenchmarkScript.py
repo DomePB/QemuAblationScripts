@@ -5,6 +5,7 @@ from collections import Counter
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+from BenchmarkScript import BENCHMARKS
 
 QEMU_BUILDS = [
     "/home/dome/qemu/QemuOptimizerAblationStudy/build-informationStudy/"
@@ -18,26 +19,6 @@ QEMU_ARGS = [
     "-serial", "stdio"
 ]
 
-BENCHMARKS = [
-    {
-        "name" : "opensbi_linux_payload.elf",
-        "command" : "qemu-system-riscv64",
-        "path" : "/home/dome/benchmarks-dominik/opensbi_linux_payload.elf",
-        "flags" : QEMU_ARGS + ["-bios"],
-    },
-    {
-        "name" : "target-631.deepsjeng",
-        "command" : "qemu-system-riscv64",
-        "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
-        "flags" : QEMU_ARGS + ["-bios"],
-    },
-    {
-        "name" : "dos-benchmark",
-        "command" : "qemu-system-i386",
-        "path" : "/home/dome/qemu/Qemu-Images/freedos.img",
-        "flags" : [],
-    }
-]
 
 MASK_RE = re.compile(
     r"fold_masks_zosa_int:\s*"
