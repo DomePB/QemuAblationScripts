@@ -33,12 +33,12 @@ BENCHMARKS = [
         "path" : "/home/dome/qemu/Qemu-Images/freedos.img",
         "flags" : ["-m", "16", "-hda"],
     },
-   # {
-    #    "name" : "target-631",
-     #   "command" : "qemu-system-riscv64",
-      #  "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
-       # "flags" : QEMU_ARGS + ["-bios"],
-   # }
+   {
+        "name" : "target-631",
+        "command" : "qemu-system-riscv64",
+        "path"  : "/home/dome/benchmarks-dominik/target-631.deepsjeng_s.0/opensbi_linux_payload.elf",
+        "flags" : QEMU_ARGS + ["-bios"],
+    }
 ]
 
 def build_cmd(build_path, benchmark):
