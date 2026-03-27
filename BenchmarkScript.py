@@ -41,6 +41,9 @@ BENCHMARKS = [
     }
 ]
 
+MAX_RETRIES = 3
+TIMEOUT_SECONDS = 90 * 60 #Sekunden   also gerade 1,5h
+
 def build_cmd(build_path, benchmark):
     build_path = Path(build_path)
     qemu_bin = build_path / benchmark["command"]
@@ -49,20 +52,48 @@ def build_cmd(build_path, benchmark):
 
 def run_benchmark(build, benchmark):
     run_id = str(uuid.uuid4())
-    start = time.perf_counter()
+    
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            start = time.perf_counter()
+            result = subprocess.run(
+                build_cmd(build, benchmark),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=TIMEOUT_SECONDS
+            )
+            end = time.perf_counter()
+            execution_time = end - start
 
-    result = subprocess.run(build_cmd(build, benchmark), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            return {
+                "run_id": run_id,
+                "build": build,
+                "binary": benchmark["name"],
+                "execution_time": execution_time,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "attempt": attempt,
+            }
 
-    end = time.perf_counter()
-    execution_time = end - start
+        except subprocess.TimeoutExpired:
+            print(f"  [Attempt {attempt}/{MAX_RETRIES}] TIMEOUT nach {TIMEOUT_SECONDS}s – {benchmark['name']}")
 
-    return {"run_id": run_id,
-            "build": build,
-            "binary": benchmark["name"],
-            "execution_time": execution_time,
-            "return_code": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr}
+        if attempt < MAX_RETRIES:
+            time.sleep(2)  
+
+    print(f"  FEHLGESCHLAGEN nach {MAX_RETRIES} Versuchen: {benchmark['name']}")
+    return {
+        "run_id": run_id,
+        "build": build,
+        "binary": benchmark["name"],
+        "execution_time": None,
+        "return_code": -1,
+        "stdout": "",
+        "stderr": f"Failed after {MAX_RETRIES} attempts",
+        "attempt": MAX_RETRIES,
+    }
 
 def save_cvs(results, path):
     fields = ["run_id", "build", "binary", "execution_time", "return_code"]
