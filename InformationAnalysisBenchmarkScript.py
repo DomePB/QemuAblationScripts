@@ -34,7 +34,7 @@ FINISH_RE = re.compile(
 
 Z_DEFAULT = 0xffffffffffffffff
 O_DEFAULT = 0x0000000000000000
-S_DEFAULT = 0x0000000000000000
+S_DEFAULT = 0x8000000000000000
 A_DEFAULT = 0xffffffffffffffff
 
 
@@ -121,7 +121,7 @@ def run_benchmark(build, benchmark):
 
             default_bits_z = z.bit_count()
             default_bits_o = (~o & MASK_64).bit_count()
-            default_bits_s = (~s & MASK_64).bit_count()
+            default_bits_s = (~(s ^ S_DEFAULT) & MASK_64).bit_count()
 
             default_hist_z[default_bits_z] += 1
             default_hist_o[default_bits_o] += 1
